@@ -1,5 +1,13 @@
 # IBKR Trade History Visualizer
 
+[English](./README.md) | [简体中文](./README_zh.md)
+
+<div align="center">
+  <h3>
+    <a href="https://ibkr-trade-visualizer.vercel.app">🚀 Launch App / Live Demo (No installation required)</a>
+  </h3>
+</div>
+
 A stunning, privacy-first, client-side web application designed to parse, aggregate, and visualize trading history CSV exports from Interactive Brokers (IBKR) and similar platforms.
 
 Built with **React, Vite, ECharts**, and pure CSS for a modern, flat, high-end dark dashboard experience.
