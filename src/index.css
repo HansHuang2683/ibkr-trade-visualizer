@@ -737,6 +737,8 @@ a {
     align-items: center;
     gap: 1.25rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+    width: 100%;
 }
 
 .kpi-card:hover {
@@ -1213,6 +1215,8 @@ th {
 .tooltip-container {
     position: relative;
     cursor: help;
+    height: 100%;
+    display: block;
 }
 
 .tooltip-content {
