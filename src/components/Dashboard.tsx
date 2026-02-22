@@ -223,10 +223,10 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
                         <div className="kpi-icon"><Clock size={24} color="#a0a0ab" /></div>
                         <div className="kpi-info">
                             <span className="text-muted text-sm">Avg Hold Time</span>
-                            <h3 style={{ fontSize: '1.05rem', marginTop: '0.2rem' }}>
-                                <span className="text-win">W:{Math.round(overallStats.avgHoldTimeWin)}m</span>
-                                <span className="text-muted mx-2">|</span>
-                                <span className="text-loss">L:{Math.round(overallStats.avgHoldTimeLoss)}m</span>
+                            <h3 style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
+                                <span className="text-win">W: {Math.round(overallStats.avgHoldTimeWin)}m</span>
+                                <span className="text-muted mx-2">-</span>
+                                <span className="text-loss">L: {Math.round(overallStats.avgHoldTimeLoss)}m</span>
                             </h3>
                         </div>
                     </div>
@@ -245,10 +245,10 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
                         <div className="kpi-icon"><Zap size={24} color="#2962ff" /></div>
                         <div className="kpi-info">
                             <span className="text-muted text-sm">Max Streak</span>
-                            <h3 style={{ fontSize: '1.05rem', marginTop: '0.2rem' }}>
-                                <span className="text-win">{overallStats.maxConsecutiveWins}W</span>
+                            <h3 style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
+                                <span className="text-win">W: {overallStats.maxConsecutiveWins}</span>
                                 <span className="text-muted mx-2">-</span>
-                                <span className="text-loss">{overallStats.maxConsecutiveLosses}L</span>
+                                <span className="text-loss">L: {overallStats.maxConsecutiveLosses}</span>
                             </h3>
                         </div>
                     </div>
