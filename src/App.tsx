@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import UploadModal from './components/UploadModal';
 import UploadedFilesTable from './components/UploadedFilesTable';
 import AccountSelector from './components/AccountSelector';
+import MetricTooltip from './components/MetricTooltip';
 import { Upload, Trash2, LayoutDashboard, Database } from 'lucide-react';
 
 function App() {
@@ -214,11 +215,32 @@ function App() {
                         </div>
                     )}
                     {currentTab === 'dashboard' && (
-                        <div className="header-stats" style={{ marginLeft: 'auto' }}>
-                            <span>Filtered PnL: </span>
-                            <span className={overallStats && overallStats.totalNetPnL >= 0 ? 'text-green font-bold' : 'text-red font-bold'}>
-                                ${overallStats?.totalNetPnL.toFixed(2) || '0.00'}
-                            </span>
+                        <div className="header-stats flex items-center gap-6" style={{ marginLeft: 'auto' }}>
+                            <MetricTooltip
+                                title="Total Commission (总手续费)"
+                                description="选中日期范围内的总交易成本。"
+                                metrics={[]}
+                            >
+                                <div className="flex items-center gap-2 cursor-help">
+                                    <span className="text-muted">Commission: </span>
+                                    <span className="text-red font-bold">
+                                        ${overallStats?.totalCommission.toFixed(2) || '0.00'}
+                                    </span>
+                                </div>
+                            </MetricTooltip>
+
+                            <MetricTooltip
+                                title="Net PnL (净盈亏)"
+                                description="扣除所有手续费后的最终净利润。"
+                                metrics={[]}
+                            >
+                                <div className="flex items-center gap-2 cursor-help">
+                                    <span className="text-muted">Filtered PnL: </span>
+                                    <span className={overallStats && overallStats.totalNetPnL >= 0 ? 'text-green font-bold' : 'text-red font-bold'}>
+                                        ${overallStats?.totalNetPnL.toFixed(2) || '0.00'}
+                                    </span>
+                                </div>
+                            </MetricTooltip>
                         </div>
                     )}
                 </header>
