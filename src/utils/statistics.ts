@@ -29,6 +29,8 @@ export interface OverallStats {
     maxDrawdown: number;
     avgHoldTimeWin: number; // in minutes
     avgHoldTimeLoss: number; // in minutes
+    holdTimeWinSamples: number;
+    holdTimeLossSamples: number;
     maxConsecutiveWins: number;
     maxConsecutiveLosses: number;
     profitPerDay: number;
@@ -82,6 +84,7 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
             winningTrades: 0, losingTrades: 0,
             largestWin: 0, largestLoss: 0, avgWin: 0, avgLoss: 0,
             averageRR: 0, maxDrawdown: 0, avgHoldTimeWin: 0, avgHoldTimeLoss: 0,
+            holdTimeWinSamples: 0, holdTimeLossSamples: 0,
             maxConsecutiveWins: 0, maxConsecutiveLosses: 0, profitPerDay: 0
         };
     }
@@ -101,6 +104,8 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
     let maxDrawdown = 0;
     let totalHoldTimeWin = 0;
     let totalHoldTimeLoss = 0;
+    let holdTimeWinSamples = 0;
+    let holdTimeLossSamples = 0;
     const uniqueTradingDays = new Set<string>();
 
     let maxConsecutiveWins = 0;
@@ -128,11 +133,15 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
         }
 
         const holdTimeMinutes = Math.abs(t.exitDate.getTime() - t.entryDate.getTime()) / 60000;
+        const hasHoldTime = holdTimeMinutes > 0;
 
         if (t.netPnL > 0) {
             winningTrades++;
             totalGrossWin += t.netPnL;
-            totalHoldTimeWin += holdTimeMinutes;
+            if (hasHoldTime) {
+                totalHoldTimeWin += holdTimeMinutes;
+                holdTimeWinSamples++;
+            }
             if (t.netPnL > largestWin) largestWin = t.netPnL;
 
             currentConsecutiveWins++;
@@ -142,7 +151,10 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
         } else if (t.netPnL < 0) {
             losingTrades++;
             totalGrossLoss += Math.abs(t.netPnL);
-            totalHoldTimeLoss += holdTimeMinutes;
+            if (hasHoldTime) {
+                totalHoldTimeLoss += holdTimeMinutes;
+                holdTimeLossSamples++;
+            }
             if (t.netPnL < largestLoss) largestLoss = t.netPnL;
 
             currentConsecutiveLosses++;
@@ -174,8 +186,10 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
         avgLoss,
         averageRR,
         maxDrawdown,
-        avgHoldTimeWin: winningTrades > 0 ? totalHoldTimeWin / winningTrades : 0,
-        avgHoldTimeLoss: losingTrades > 0 ? totalHoldTimeLoss / losingTrades : 0,
+        avgHoldTimeWin: holdTimeWinSamples > 0 ? totalHoldTimeWin / holdTimeWinSamples : 0,
+        avgHoldTimeLoss: holdTimeLossSamples > 0 ? totalHoldTimeLoss / holdTimeLossSamples : 0,
+        holdTimeWinSamples,
+        holdTimeLossSamples,
         maxConsecutiveWins,
         maxConsecutiveLosses,
         profitPerDay

@@ -20,6 +20,12 @@ interface Props {
 
 const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
     const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
+    const winHoldTime = overallStats.holdTimeWinSamples > 0
+        ? `${Math.round(overallStats.avgHoldTimeWin)}m`
+        : t.unavailable;
+    const lossHoldTime = overallStats.holdTimeLossSamples > 0
+        ? `${Math.round(overallStats.avgHoldTimeLoss)}m`
+        : t.unavailable;
 
     const equityChartOptions = useMemo(() => {
         // We want the equity curve to go forward in time. dailyStats is descending.
@@ -214,7 +220,11 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
 
                 <MetricTooltip
                     title={t.avgHoldTime}
-                    description={t.avgHoldTimeDesc}
+                    description={
+                        overallStats.holdTimeWinSamples + overallStats.holdTimeLossSamples > 0
+                            ? t.avgHoldTimeDesc
+                            : t.unavailableHoldTimeDesc
+                    }
                     metrics={[
                         { label: t.good, value: t.excellentHold, color: 'green' },
                         { label: t.normal, value: t.neutralHold, color: 'yellow' },
@@ -226,9 +236,9 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                         <div className="kpi-info">
                             <span className="text-muted text-sm">{t.avgHoldTime}</span>
                             <h3 style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
-                                <span className="text-win">W: {Math.round(overallStats.avgHoldTimeWin)}m</span>
+                                <span className="text-win">W: {winHoldTime}</span>
                                 <span className="text-muted mx-2">-</span>
-                                <span className="text-loss">L: {Math.round(overallStats.avgHoldTimeLoss)}m</span>
+                                <span className="text-loss">L: {lossHoldTime}</span>
                             </h3>
                         </div>
                     </div>
