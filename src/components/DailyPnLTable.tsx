@@ -1,4 +1,4 @@
-import { useState, Fragment, useEffect } from 'react';
+import { useState, Fragment, useEffect, useRef } from 'react';
 import { DailyStat } from '../utils/statistics';
 import { ClosedTrade } from '../types';
 import { ChevronDown, ChevronRight, ArrowUpDown, Image as ImageIcon } from 'lucide-react';
@@ -11,6 +11,7 @@ interface Props {
     dailyStats: DailyStat[];
     t: Translation;
     focusedDate?: string | null;
+    focusRequestId?: number;
 }
 
 type SortKey = 'entryDate' | 'holdTime' | 'netPnL';
@@ -43,9 +44,10 @@ const getTradeDirectionClass = (trade: ClosedTrade) => {
     return trade.side === 'Long' ? 'text-green' : 'text-red';
 };
 
-const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate }) => {
+const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusRequestId }) => {
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' } | null>(null);
+    const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
 
     // Image Modal State
     const [selectedTrade, setSelectedTrade] = useState<ClosedTrade | null>(null);
@@ -68,7 +70,28 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate }) => {
 
     useEffect(() => {
         if (focusedDate) setExpandedDate(focusedDate);
-    }, [focusedDate]);
+    }, [focusedDate, focusRequestId]);
+
+    useEffect(() => {
+        if (!focusedDate) return;
+
+        const frameId = window.requestAnimationFrame(() => {
+            const row = rowRefs.current.get(focusedDate);
+            const scrollContainer = row?.closest('.content-scroll') as HTMLElement | null;
+            if (!row || !scrollContainer) return;
+
+            const rowTop = row.getBoundingClientRect().top;
+            const containerTop = scrollContainer.getBoundingClientRect().top;
+            const nextScrollTop = scrollContainer.scrollTop + rowTop - containerTop;
+
+            scrollContainer.scrollTo({
+                top: Math.max(0, nextScrollTop),
+                behavior: 'smooth',
+            });
+        });
+
+        return () => window.cancelAnimationFrame(frameId);
+    }, [focusedDate, focusRequestId, expandedDate]);
 
     const handleDayClick = (dateStr: string) => {
         if (expandedDate === dateStr) setExpandedDate(null);
@@ -148,6 +171,10 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate }) => {
                         return (
                             <Fragment key={day.dateStr}>
                                 <tr
+                                    ref={element => {
+                                        if (element) rowRefs.current.set(day.dateStr, element);
+                                        else rowRefs.current.delete(day.dateStr);
+                                    }}
                                     className={`day-row ${isExpanded ? 'expanded' : ''} ${isFocused ? 'focused' : ''} ${day.netPnL >= 0 ? 'row-green' : 'row-red'}`}
                                     onClick={() => handleDayClick(day.dateStr)}
                                 >

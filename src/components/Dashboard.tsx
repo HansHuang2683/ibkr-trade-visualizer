@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { ClosedTrade } from '../types';
 import { DailyStat, OverallStats } from '../utils/statistics';
@@ -21,7 +21,7 @@ interface Props {
 const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
     const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
     const [focusedDate, setFocusedDate] = useState<string | null>(null);
-    const tradeLogRef = useRef<HTMLDivElement>(null);
+    const [focusRequestId, setFocusRequestId] = useState(0);
     const formatCurrency = (value: number) => `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
     const drawdownStartLabel = overallStats.maxDrawdownStartDate ?? t.startOfPeriod;
     const drawdownEndLabel = overallStats.maxDrawdownEndDate ?? t.drawdownNoRange;
@@ -33,10 +33,8 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
         click: (params: { name?: string }) => {
             if (!params.name) return;
             setFocusedDate(params.name);
+            setFocusRequestId(id => id + 1);
             setViewMode('table');
-            window.setTimeout(() => {
-                tradeLogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 80);
         }
     };
     const lossHoldTime = overallStats.holdTimeLossSamples > 0
@@ -368,7 +366,7 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                 </div>
             </div>
 
-            <div className="mt-8" ref={tradeLogRef}>
+            <div className="mt-8">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg">{t.dailyPerformance}</h3>
                     <div className="segment-control">
@@ -387,7 +385,12 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                     </div>
                 </div>
                 {viewMode === 'table' ? (
-                    <DailyPnLTable dailyStats={dailyStats} t={t} focusedDate={focusedDate} />
+                    <DailyPnLTable
+                        dailyStats={dailyStats}
+                        t={t}
+                        focusedDate={focusedDate}
+                        focusRequestId={focusRequestId}
+                    />
                 ) : (
                     <DailyPnLCalendar dailyStats={dailyStats} t={t} />
                 )}
