@@ -390,6 +390,7 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                         t={t}
                         focusedDate={focusedDate}
                         focusRequestId={focusRequestId}
+                        onFocusHandled={() => setFocusedDate(null)}
                     />
                 ) : (
                     <DailyPnLCalendar dailyStats={dailyStats} t={t} />

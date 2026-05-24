@@ -12,6 +12,7 @@ interface Props {
     t: Translation;
     focusedDate?: string | null;
     focusRequestId?: number;
+    onFocusHandled?: () => void;
 }
 
 type SortKey = 'entryDate' | 'holdTime' | 'netPnL';
@@ -44,7 +45,7 @@ const getTradeDirectionClass = (trade: ClosedTrade) => {
     return trade.side === 'Long' ? 'text-green' : 'text-red';
 };
 
-const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusRequestId }) => {
+const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusRequestId, onFocusHandled }) => {
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' } | null>(null);
     const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
@@ -73,12 +74,15 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusReque
     }, [focusedDate, focusRequestId]);
 
     useEffect(() => {
-        if (!focusedDate) return;
+        if (!focusedDate || !focusRequestId) return;
 
         const frameId = window.requestAnimationFrame(() => {
             const row = rowRefs.current.get(focusedDate);
             const scrollContainer = row?.closest('.content-scroll') as HTMLElement | null;
-            if (!row || !scrollContainer) return;
+            if (!row || !scrollContainer) {
+                onFocusHandled?.();
+                return;
+            }
 
             const rowTop = row.getBoundingClientRect().top;
             const containerTop = scrollContainer.getBoundingClientRect().top;
@@ -88,10 +92,12 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusReque
                 top: Math.max(0, nextScrollTop),
                 behavior: 'smooth',
             });
+
+            window.setTimeout(() => onFocusHandled?.(), 350);
         });
 
         return () => window.cancelAnimationFrame(frameId);
-    }, [focusedDate, focusRequestId, expandedDate]);
+    }, [focusedDate, focusRequestId]);
 
     const handleDayClick = (dateStr: string) => {
         if (expandedDate === dateStr) setExpandedDate(null);
