@@ -20,6 +20,9 @@ interface Props {
 
 const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
     const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
+    const formatCurrency = (value: number) => `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
+    const drawdownStartLabel = overallStats.maxDrawdownStartDate ?? t.startOfPeriod;
+    const drawdownEndLabel = overallStats.maxDrawdownEndDate ?? t.drawdownNoRange;
     const winHoldTime = overallStats.holdTimeWinSamples > 0
         ? `${Math.round(overallStats.avgHoldTimeWin)}m`
         : t.unavailable;
@@ -300,7 +303,42 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                             <h3>{overallStats.totalTrades}</h3>
                         </div>
                     </div>
-                </MetricTooltip>            </div>
+                </MetricTooltip>
+            </div>
+
+            <div className="drawdown-panel mt-8">
+                <div className="drawdown-panel-icon">
+                    <TrendingDown size={22} />
+                </div>
+                <div className="drawdown-panel-main">
+                    <div className="drawdown-panel-header">
+                        <div>
+                            <h3>{t.drawdownRange}</h3>
+                            <p>{t.drawdownRangeDesc}</p>
+                        </div>
+                        <div className="drawdown-panel-loss">
+                            -${overallStats.maxDrawdown.toFixed(2)}
+                        </div>
+                    </div>
+                    <div className="drawdown-panel-grid">
+                        <div>
+                            <span>{t.drawdownPeak}</span>
+                            <strong>{drawdownStartLabel}</strong>
+                            <small>{formatCurrency(overallStats.maxDrawdownStartEquity)}</small>
+                        </div>
+                        <div>
+                            <span>{t.drawdownTrough}</span>
+                            <strong>{drawdownEndLabel}</strong>
+                            <small>{formatCurrency(overallStats.maxDrawdownEndEquity)}</small>
+                        </div>
+                        <div>
+                            <span>{t.drawdownTrades}</span>
+                            <strong>{overallStats.maxDrawdownTradeCount}</strong>
+                            <small>{t.trades}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div className="charts-container flex flex-col gap-8 mt-8">
                 <div className="chart-wrapper w-full">

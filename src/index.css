@@ -762,6 +762,97 @@ a {
     margin-top: 0.25rem;
 }
 
+.drawdown-panel {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(246, 70, 93, 0.24);
+    border-radius: var(--border-radius-lg);
+    background:
+        radial-gradient(circle at top left, rgba(246, 70, 93, 0.16), transparent 34%),
+        linear-gradient(135deg, rgba(19, 20, 24, 0.95), rgba(12, 13, 17, 0.92));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.drawdown-panel-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--color-red);
+    background: rgba(246, 70, 93, 0.12);
+}
+
+.drawdown-panel-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.drawdown-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.drawdown-panel-header h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.drawdown-panel-header p,
+.drawdown-panel-grid span,
+.drawdown-panel-grid small {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.drawdown-panel-loss {
+    color: var(--color-red);
+    font-size: 1.5rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.drawdown-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.drawdown-panel-grid > div {
+    padding: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.drawdown-panel-grid span,
+.drawdown-panel-grid strong,
+.drawdown-panel-grid small {
+    display: block;
+}
+
+.drawdown-panel-grid strong {
+    margin: 0.2rem 0;
+    font-size: 1rem;
+}
+
+@media (max-width: 780px) {
+    .drawdown-panel,
+    .drawdown-panel-header {
+        flex-direction: column;
+    }
+
+    .drawdown-panel-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Charts */
 .charts-container {
     background: var(--bg-card);

@@ -27,6 +27,11 @@ export interface OverallStats {
     avgLoss: number;
     averageRR: number;
     maxDrawdown: number;
+    maxDrawdownStartDate: string | null;
+    maxDrawdownEndDate: string | null;
+    maxDrawdownStartEquity: number;
+    maxDrawdownEndEquity: number;
+    maxDrawdownTradeCount: number;
     avgHoldTimeWin: number; // in minutes
     avgHoldTimeLoss: number; // in minutes
     holdTimeWinSamples: number;
@@ -84,6 +89,8 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
             winningTrades: 0, losingTrades: 0,
             largestWin: 0, largestLoss: 0, avgWin: 0, avgLoss: 0,
             averageRR: 0, maxDrawdown: 0, avgHoldTimeWin: 0, avgHoldTimeLoss: 0,
+            maxDrawdownStartDate: null, maxDrawdownEndDate: null,
+            maxDrawdownStartEquity: 0, maxDrawdownEndEquity: 0, maxDrawdownTradeCount: 0,
             holdTimeWinSamples: 0, holdTimeLossSamples: 0,
             maxConsecutiveWins: 0, maxConsecutiveLosses: 0, profitPerDay: 0
         };
@@ -102,6 +109,13 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
     let peakEquity = 0;
     let currentEquity = 0;
     let maxDrawdown = 0;
+    let peakDate: string | null = null;
+    let peakTradeIndex = -1;
+    let maxDrawdownStartDate: string | null = null;
+    let maxDrawdownEndDate: string | null = null;
+    let maxDrawdownStartEquity = 0;
+    let maxDrawdownEndEquity = 0;
+    let maxDrawdownTradeCount = 0;
     let totalHoldTimeWin = 0;
     let totalHoldTimeLoss = 0;
     let holdTimeWinSamples = 0;
@@ -116,20 +130,28 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
     // Sort chronologically for drawdown and streak calculations
     const chronologicalTrades = [...trades].sort((a, b) => a.exitDate.getTime() - b.exitDate.getTime());
 
-    for (const t of chronologicalTrades) {
+    for (const [index, t] of chronologicalTrades.entries()) {
         totalNetPnL += t.netPnL;
         totalGrossPnL += t.grossPnL;
         totalCommission += t.commission;
 
-        uniqueTradingDays.add(format(t.exitDate, 'yyyy-MM-dd'));
+        const exitDateStr = format(t.exitDate, 'yyyy-MM-dd');
+        uniqueTradingDays.add(exitDateStr);
 
         currentEquity += t.netPnL;
         if (currentEquity > peakEquity) {
             peakEquity = currentEquity;
+            peakDate = exitDateStr;
+            peakTradeIndex = index;
         }
         const drawdownCount = peakEquity - currentEquity;
         if (drawdownCount > maxDrawdown) {
             maxDrawdown = drawdownCount;
+            maxDrawdownStartDate = peakDate;
+            maxDrawdownEndDate = exitDateStr;
+            maxDrawdownStartEquity = peakEquity;
+            maxDrawdownEndEquity = currentEquity;
+            maxDrawdownTradeCount = index - peakTradeIndex;
         }
 
         const holdTimeMinutes = Math.abs(t.exitDate.getTime() - t.entryDate.getTime()) / 60000;
@@ -186,6 +208,11 @@ export function calculateOverallStats(trades: ClosedTrade[]): OverallStats {
         avgLoss,
         averageRR,
         maxDrawdown,
+        maxDrawdownStartDate,
+        maxDrawdownEndDate,
+        maxDrawdownStartEquity,
+        maxDrawdownEndEquity,
+        maxDrawdownTradeCount,
         avgHoldTimeWin: holdTimeWinSamples > 0 ? totalHoldTimeWin / holdTimeWinSamples : 0,
         avgHoldTimeLoss: holdTimeLossSamples > 0 ? totalHoldTimeLoss / holdTimeLossSamples : 0,
         holdTimeWinSamples,
