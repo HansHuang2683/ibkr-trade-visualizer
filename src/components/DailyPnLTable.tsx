@@ -49,6 +49,7 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusReque
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' } | null>(null);
     const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
+    const handledFocusRequestId = useRef(0);
 
     // Image Modal State
     const [selectedTrade, setSelectedTrade] = useState<ClosedTrade | null>(null);
@@ -70,11 +71,11 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusReque
     }, [dailyStats]);
 
     useEffect(() => {
-        if (focusedDate) setExpandedDate(focusedDate);
-    }, [focusedDate, focusRequestId]);
-
-    useEffect(() => {
         if (!focusedDate || !focusRequestId) return;
+        if (handledFocusRequestId.current === focusRequestId) return;
+
+        handledFocusRequestId.current = focusRequestId;
+        setExpandedDate(focusedDate);
 
         const frameId = window.requestAnimationFrame(() => {
             const row = rowRefs.current.get(focusedDate);
@@ -90,14 +91,14 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate, focusReque
 
             scrollContainer.scrollTo({
                 top: Math.max(0, nextScrollTop),
-                behavior: 'smooth',
+                behavior: 'auto',
             });
 
-            window.setTimeout(() => onFocusHandled?.(), 350);
+            onFocusHandled?.();
         });
 
         return () => window.cancelAnimationFrame(frameId);
-    }, [focusedDate, focusRequestId]);
+    }, [focusedDate, focusRequestId, onFocusHandled]);
 
     const handleDayClick = (dateStr: string) => {
         if (expandedDate === dateStr) setExpandedDate(null);
