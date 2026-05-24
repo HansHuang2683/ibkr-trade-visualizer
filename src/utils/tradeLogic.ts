@@ -99,6 +99,15 @@ export function matchTradesFIFO(trades: RawTrade[]): ClosedTrade[] {
 
         for (const t of symbolTrades) {
             if (openPositions.length === readIndex) {
+                const closeCode = t.transactionType ?? '';
+                const isUnmatchedCloseOnly = closeCode.includes('C') && !closeCode.includes('O');
+                if (isUnmatchedCloseOnly) {
+                    // The report can start with a close for a position opened before
+                    // the selected date range. Without the opening leg, FIFO cannot
+                    // reconstruct a reviewable trade, so we skip it instead of
+                    // inventing a fake entry.
+                    continue;
+                }
                 // No open positions (or all consumed), start a new one
                 openPositions.push({ ...t, remainingQty: t.qty, remainingComm: t.commission });
                 continue;

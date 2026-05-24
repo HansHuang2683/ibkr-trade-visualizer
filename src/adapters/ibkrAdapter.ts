@@ -74,8 +74,8 @@ export const IBKRAdapter: BrokerAdapter = {
                             const discriminator = row[2]?.trim();
 
                             // Chinese Activity Statement trade section.
-                            // Import only close rows, using IBKR's realized PnL. Interest and transfers live in
-                            // other sections and never enter the trade-performance dataset.
+                            // Import futures order executions as raw fills and let FIFO reconstruct
+                            // entry/exit prices, points, and hold time for review.
                             if (section === '\u4ea4\u6613' && rowType === 'Header') {
                                 format = 'chinese-activity';
                                 currentHeaderMap = {};
@@ -90,7 +90,7 @@ export const IBKRAdapter: BrokerAdapter = {
 
                                 const assetClass = row[3]?.trim() ?? '';
                                 const closeCode = row[15]?.trim() ?? '';
-                                if (assetClass !== '\u671f\u8d27' || !closeCode.includes('C')) continue;
+                                if (assetClass !== '\u671f\u8d27') continue;
 
                                 const symbol = row[5]?.trim() ?? '';
                                 const dateStr = row[6]?.trim() ?? '';
@@ -98,16 +98,15 @@ export const IBKRAdapter: BrokerAdapter = {
                                 const price = cleanNum(row[8]);
                                 const notional = cleanNum(row[10]);
                                 const commission = Math.abs(cleanNum(row[11]));
-                                const realizedPnL = cleanNum(row[13]);
 
-                                if (!symbol || !dateStr || price === 0) continue;
+                                if (!symbol || !dateStr || price === 0 || qtyRaw === 0) continue;
 
                                 const side: 'Buy' | 'Sell' = qtyRaw >= 0 ? 'Buy' : 'Sell';
-                                const qty = Math.abs(qtyRaw) || 1;
+                                const qty = Math.abs(qtyRaw);
                                 let date = parse(dateStr, 'yyyy-MM-dd, HH:mm:ss', new Date());
                                 if (!isValid(date)) date = new Date(dateStr);
 
-                                const dataStr = `${symbol}|${side}|${qty}|${price}|${dateStr}|${notional}|${commission}|${realizedPnL}|${closeCode}|${rowIndex}`;
+                                const dataStr = `${symbol}|${side}|${qty}|${price}|${dateStr}|${notional}|${commission}|${closeCode}|${rowIndex}`;
                                 const baseHash = fastStringHash(dataStr).toString(16);
                                 const count = hashCounts.get(baseHash) ?? 0;
                                 hashCounts.set(baseHash, count + 1);
@@ -124,8 +123,6 @@ export const IBKRAdapter: BrokerAdapter = {
                                     date,
                                     commission,
                                     netAmount: notional,
-                                    realizedPnL,
-                                    realizedGrossPnL: realizedPnL + commission,
                                     transactionType: closeCode,
                                     rowIndex,
                                 });
