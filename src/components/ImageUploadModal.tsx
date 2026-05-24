@@ -3,14 +3,16 @@ import { X, Upload, Trash2, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ClosedTrade, TradeImage } from '../types';
 import { StorageService } from '../services/storageService';
+import { Translation } from '../i18n';
 
 interface Props {
     trade: ClosedTrade;
     onClose: () => void;
     onUpdateStatus: (tradeId: string, hasImages: boolean) => void;
+    t: Translation;
 }
 
-const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus }) => {
+const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus, t }) => {
     const [images, setImages] = useState<TradeImage[]>([]);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [isClosing, setIsClosing] = useState(false);
@@ -45,7 +47,7 @@ const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus }) =
                         id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                         tradeId: trade.id,
                         data: base64,
-                        name: file.name || 'Pasted Image',
+                        name: file.name || t.pastedImage,
                         timestamp: Date.now()
                     };
                     await StorageService.saveTradeImage(newImg);
@@ -129,7 +131,7 @@ const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus }) =
                     <div className="flex items-center gap-2">
                         <ImageIcon size={20} className="text-blue" />
                         <div>
-                            <h3>Trade Review: {trade.symbol}</h3>
+                            <h3>{t.tradeReview}: {trade.symbol}</h3>
                             <p className="modal-subtitle">
                                 {format(trade.entryDate, 'MMM d, yyyy')} • {trade.side} • ${trade.netPnL.toFixed(2)}
                             </p>
@@ -149,8 +151,8 @@ const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus }) =
                         onDrop={handleDrop}
                     >
                         <Upload size={32} className="text-muted mb-2" />
-                        <p>Drag images here or <strong>Ctrl + V</strong> to paste from clipboard</p>
-                        <p className="text-xs text-muted mt-1">Supports PNG, JPG, GIF</p>
+                        <p>{t.imageDropHint}</p>
+                        <p className="text-xs text-muted mt-1">{t.imageSupportHint}</p>
                     </div>
 
                     {/* Image Gallery */}
@@ -168,7 +170,7 @@ const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus }) =
                         ))}
                         {images.length === 0 && (
                             <div className="empty-gallery">
-                                <p>No screenshots attached to this trade.</p>
+                                <p>{t.noScreenshots}</p>
                             </div>
                         )}
                     </div>
@@ -182,7 +184,7 @@ const ImageUploadModal: React.FC<Props> = ({ trade, onClose, onUpdateStatus }) =
                         <button className="lightbox-close" onClick={() => setPreviewImage(null)}>
                             <X size={24} />
                         </button>
-                        <img src={previewImage} alt="Preview" />
+                        <img src={previewImage} alt={t.preview} />
                     </div>
                 </div>
             )}

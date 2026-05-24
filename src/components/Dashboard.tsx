@@ -9,14 +9,16 @@ import {
     Activity, Target, ListTodo, Calendar as CalendarIcon, List as ListIcon,
     Scale, TrendingDown, Clock, Zap
 } from 'lucide-react';
+import { Translation } from '../i18n';
 
 interface Props {
     closedTrades: ClosedTrade[];
     dailyStats: DailyStat[];
     overallStats: OverallStats;
+    t: Translation;
 }
 
-const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
+const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
     const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
 
     const equityChartOptions = useMemo(() => {
@@ -66,7 +68,7 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
             },
             series: [
                 {
-                    name: 'Cumulative PnL',
+                    name: t.cumulativePnl,
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -90,7 +92,7 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
                 }
             ]
         };
-    }, [dailyStats]);
+    }, [dailyStats, t.cumulativePnl]);
 
     const dailyBarOptions = useMemo(() => {
         const chronologicalStats = [...dailyStats].reverse();
@@ -125,7 +127,7 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
             },
             series: [
                 {
-                    name: 'Daily PnL',
+                    name: t.dailyNetPnl,
                     type: 'bar',
                     data: seriesData,
                     barMaxWidth: 30,
@@ -133,96 +135,96 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
                 }
             ]
         };
-    }, [dailyStats]);
+    }, [dailyStats, t.dailyNetPnl]);
 
     return (
         <div className="dashboard">
             <div className="kpi-grid">
                 <MetricTooltip
-                    title="Win Rate (胜率)"
-                    description="盈利交易笔数占总交易笔数的百分比。反映策略的准确度。"
+                    title={t.winRate}
+                    description={t.winRateDesc}
                     metrics={[
-                        { label: '优', value: '> 55%', color: 'green' },
-                        { label: '平', value: '40% - 55%', color: 'yellow' },
-                        { label: '劣', value: '< 40%', color: 'red' }
+                        { label: t.good, value: t.excellentWinRate, color: 'green' },
+                        { label: t.normal, value: t.neutralWinRate, color: 'yellow' },
+                        { label: t.weak, value: t.poorWinRate, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><Activity size={24} color="#0ecb81" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Win Rate</span>
+                            <span className="text-muted text-sm">{t.winRate}</span>
                             <h3>{overallStats.winRate.toFixed(1)}%</h3>
                         </div>
                     </div>
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Profit Factor (盈亏因数)"
-                    description="总毛利润除以总毛亏损的绝对值。衡量总体盈利效率。"
+                    title={t.profitFactor}
+                    description={t.profitFactorDesc}
                     metrics={[
-                        { label: '优', value: '> 1.5 (印钞机)', color: 'green' },
-                        { label: '平', value: '1.0 - 1.5 (微利或盈亏平衡)', color: 'yellow' },
-                        { label: '劣', value: '< 1.0 (亏损策略)', color: 'red' }
+                        { label: t.good, value: t.excellentProfitFactor, color: 'green' },
+                        { label: t.normal, value: t.neutralProfitFactor, color: 'yellow' },
+                        { label: t.weak, value: t.poorProfitFactor, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><Target size={24} color="#2962ff" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Profit Factor</span>
+                            <span className="text-muted text-sm">{t.profitFactor}</span>
                             <h3>{overallStats.profitFactor === Infinity ? '∞' : overallStats.profitFactor.toFixed(2)}</h3>
                         </div>
                     </div>
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Average RR (平均盈亏比)"
-                    description="平均单笔盈利除以平均单笔亏损。反映持仓的回报潜力。"
+                    title={t.averageRR}
+                    description={t.averageRRDesc}
                     metrics={[
-                        { label: '优', value: '> 1.5 (以小博大)', color: 'green' },
-                        { label: '平', value: '1.0 - 1.5 (正常水平)', color: 'yellow' },
-                        { label: '劣', value: '< 1.0 (赚小亏大)', color: 'red' }
+                        { label: t.good, value: t.excellentRR, color: 'green' },
+                        { label: t.normal, value: t.neutralRR, color: 'yellow' },
+                        { label: t.weak, value: t.poorRR, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><Scale size={24} color="#f0bb33" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Average RR</span>
+                            <span className="text-muted text-sm">{t.averageRR}</span>
                             <h3>1 : {overallStats.averageRR === Infinity ? '∞' : overallStats.averageRR.toFixed(2)}</h3>
                         </div>
                     </div>
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Max Drawdown (最大回撤)"
-                    description="资金曲线从历史最高点到最低点的最大跌幅。衡量极值风险。"
+                    title={t.maxDrawdown}
+                    description={t.maxDrawdownDesc}
                     metrics={[
-                        { label: '优', value: '回撤极小，曲线平滑上升', color: 'green' },
-                        { label: '平', value: '可控的正常波动回撤', color: 'yellow' },
-                        { label: '劣', value: '巨大回撤，伤及本金或心态', color: 'red' }
+                        { label: t.good, value: t.excellentDrawdown, color: 'green' },
+                        { label: t.normal, value: t.neutralDrawdown, color: 'yellow' },
+                        { label: t.weak, value: t.poorDrawdown, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><TrendingDown size={24} color="#f6465d" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Max Drawdown</span>
+                            <span className="text-muted text-sm">{t.maxDrawdown}</span>
                             <h3 className="text-loss">-${overallStats.maxDrawdown.toFixed(2)}</h3>
                         </div>
                     </div>
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Avg Hold Time (平均持仓时间)"
-                    description="盈利单(W)与亏损单(L)的平均持仓时间比对。"
+                    title={t.avgHoldTime}
+                    description={t.avgHoldTimeDesc}
                     metrics={[
-                        { label: '优', value: '盈利单持仓 > 亏损单持仓 (截断短亏，让利润奔跑)', color: 'green' },
-                        { label: '平', value: '持仓时间相近', color: 'yellow' },
-                        { label: '劣', value: '盈利单持仓 < 亏损单持仓 (拿不住盈利单，死扛亏损单)', color: 'red' }
+                        { label: t.good, value: t.excellentHold, color: 'green' },
+                        { label: t.normal, value: t.neutralHold, color: 'yellow' },
+                        { label: t.weak, value: t.poorHold, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><Clock size={24} color="#a0a0ab" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Avg Hold Time</span>
+                            <span className="text-muted text-sm">{t.avgHoldTime}</span>
                             <h3 style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
                                 <span className="text-win">W: {Math.round(overallStats.avgHoldTimeWin)}m</span>
                                 <span className="text-muted mx-2">-</span>
@@ -233,18 +235,18 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Max Streak (极限连胜/连亏)"
-                    description="历史上发生过的最长连续盈利与连续亏损次数。"
+                    title={t.maxStreak}
+                    description={t.maxStreakDesc}
                     metrics={[
-                        { label: '优', value: '连胜次数显著大于连亏', color: 'green' },
-                        { label: '平', value: '连胜与连亏次数相近', color: 'yellow' },
-                        { label: '劣', value: '高密度的连续亏损，存在暴跌失控的扛单风险', color: 'red' }
+                        { label: t.good, value: t.excellentStreak, color: 'green' },
+                        { label: t.normal, value: t.neutralStreak, color: 'yellow' },
+                        { label: t.weak, value: t.poorStreak, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><Zap size={24} color="#2962ff" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Max Streak</span>
+                            <span className="text-muted text-sm">{t.maxStreak}</span>
                             <h3 style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
                                 <span className="text-win">W: {overallStats.maxConsecutiveWins}</span>
                                 <span className="text-muted mx-2">-</span>
@@ -255,36 +257,36 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Profit per Day (日均利润)"
-                    description="总净利润除以发生过交易的实际天数。"
+                    title={t.profitPerDay}
+                    description={t.profitPerDayDesc}
                     metrics={[
-                        { label: '优', value: '稳定且丰厚的日均产出', color: 'green' },
-                        { label: '平', value: '盈利能覆盖生活/交易摩擦成本', color: 'yellow' },
-                        { label: '劣', value: '日均为负且波动剧烈', color: 'red' }
+                        { label: t.good, value: t.excellentProfitDay, color: 'green' },
+                        { label: t.normal, value: t.neutralProfitDay, color: 'yellow' },
+                        { label: t.weak, value: t.poorProfitDay, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><CalendarIcon size={24} color="#0ecb81" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Profit / Day</span>
+                            <span className="text-muted text-sm">{t.profitPerDay}</span>
                             <h3>${overallStats.profitPerDay.toFixed(2)}</h3>
                         </div>
                     </div>
                 </MetricTooltip>
 
                 <MetricTooltip
-                    title="Total Trades (总交易笔数)"
-                    description="统计周期内所有的平仓交易总数。频繁交易通常会导致高昂的手续费摩擦。"
+                    title={t.totalTrades}
+                    description={t.totalTradesDesc}
                     metrics={[
-                        { label: '优', value: '符合个人策略预期的交易频率', color: 'green' },
-                        { label: '平', value: '偶尔克制不住的过度交易', color: 'yellow' },
-                        { label: '劣', value: '陷入非理性的高频刷单交易', color: 'red' }
+                        { label: t.good, value: t.excellentTrades, color: 'green' },
+                        { label: t.normal, value: t.neutralTrades, color: 'yellow' },
+                        { label: t.weak, value: t.poorTrades, color: 'red' }
                     ]}
                 >
                     <div className="kpi-card">
                         <div className="kpi-icon"><ListTodo size={24} color="#f0f0f2" /></div>
                         <div className="kpi-info">
-                            <span className="text-muted text-sm">Total Trades</span>
+                            <span className="text-muted text-sm">{t.totalTrades}</span>
                             <h3>{overallStats.totalTrades}</h3>
                         </div>
                     </div>
@@ -292,37 +294,37 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats }) => {
 
             <div className="charts-container flex flex-col gap-8 mt-8">
                 <div className="chart-wrapper w-full">
-                    <h3 className="mb-4 text-lg">Equity Curve</h3>
+                    <h3 className="mb-4 text-lg">{t.equityCurve}</h3>
                     <ReactECharts option={equityChartOptions} style={{ height: '500px', width: '100%' }} />
                 </div>
                 <div className="chart-wrapper w-full">
-                    <h3 className="mb-4 text-lg">Daily Net PnL</h3>
+                    <h3 className="mb-4 text-lg">{t.dailyNetPnl}</h3>
                     <ReactECharts option={dailyBarOptions} style={{ height: '400px', width: '100%' }} />
                 </div>
             </div>
 
             <div className="mt-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg">Daily Performance & Trade Log</h3>
+                    <h3 className="text-lg">{t.dailyPerformance}</h3>
                     <div className="segment-control">
                         <button
                             className={`segment-btn ${viewMode === 'table' ? 'active' : ''}`}
                             onClick={() => setViewMode('table')}
                         >
-                            <ListIcon size={16} /> Table
+                            <ListIcon size={16} /> {t.table}
                         </button>
                         <button
                             className={`segment-btn ${viewMode === 'calendar' ? 'active' : ''}`}
                             onClick={() => setViewMode('calendar')}
                         >
-                            <CalendarIcon size={16} /> Calendar
+                            <CalendarIcon size={16} /> {t.calendar}
                         </button>
                     </div>
                 </div>
                 {viewMode === 'table' ? (
-                    <DailyPnLTable dailyStats={dailyStats} />
+                    <DailyPnLTable dailyStats={dailyStats} t={t} />
                 ) : (
-                    <DailyPnLCalendar dailyStats={dailyStats} />
+                    <DailyPnLCalendar dailyStats={dailyStats} t={t} />
                 )}
             </div>
         </div>

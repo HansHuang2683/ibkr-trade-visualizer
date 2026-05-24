@@ -5,9 +5,11 @@ import { ChevronDown, ChevronRight, ArrowUpDown, Image as ImageIcon } from 'luci
 import { format } from 'date-fns';
 import ImageUploadModal from './ImageUploadModal';
 import { StorageService } from '../services/storageService';
+import { Translation } from '../i18n';
 
 interface Props {
     dailyStats: DailyStat[];
+    t: Translation;
 }
 
 type SortKey = 'entryDate' | 'holdTime' | 'netPnL';
@@ -38,7 +40,7 @@ const getTradeDirectionClass = (trade: ClosedTrade) => {
     return trade.side === 'Long' ? 'text-green' : 'text-red';
 };
 
-const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
+const DailyPnLTable: React.FC<Props> = ({ dailyStats, t }) => {
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' } | null>(null);
 
@@ -125,11 +127,11 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
                 <thead>
                     <tr>
                         <th style={{ width: '40px' }}></th>
-                        <th>Date</th>
-                        <th className="text-right">Trades</th>
-                        <th className="text-right">Gross PnL</th>
-                        <th className="text-right">Commissions</th>
-                        <th className="text-right">Net PnL</th>
+                        <th>{t.date}</th>
+                        <th className="text-right">{t.trades}</th>
+                        <th className="text-right">{t.grossPnl}</th>
+                        <th className="text-right">{t.commissions}</th>
+                        <th className="text-right">{t.netPnl}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -159,35 +161,35 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
                                     <tr className="trades-detail-row">
                                         <td colSpan={6} className="trades-detail-cell">
                                             <div className="trades-table-wrapper">
-                                                <h4>Trades for {day.dateStr}</h4>
+                                                <h4>{t.tradesFor(day.dateStr)}</h4>
                                                 <table className="trades-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Symbol</th>
-                                                            <th>Side</th>
-                                                            <th className="text-right">Qty</th>
-                                                            <th className="text-right">Entry</th>
-                                                            <th className="text-right">Exit</th>
-                                                            <th className="text-right">Points</th>
+                                                            <th>{t.symbol}</th>
+                                                            <th>{t.side}</th>
+                                                            <th className="text-right">{t.qty}</th>
+                                                            <th className="text-right">{t.entry}</th>
+                                                            <th className="text-right">{t.exit}</th>
+                                                            <th className="text-right">{t.points}</th>
                                                             <th
                                                                 className={`sortable-header ${sortConfig?.key === 'entryDate' ? 'sort-active' : ''}`}
                                                                 onClick={() => handleSort('entryDate')}
                                                             >
-                                                                Entry Time {sortIcon('entryDate')}
+                                                                {t.entryTime} {sortIcon('entryDate')}
                                                             </th>
-                                                            <th>Exit Time</th>
+                                                            <th>{t.exitTime}</th>
                                                             <th
                                                                 className={`sortable-header ${sortConfig?.key === 'holdTime' ? 'sort-active' : ''}`}
                                                                 onClick={() => handleSort('holdTime')}
                                                             >
-                                                                Hold Time {sortIcon('holdTime')}
+                                                                {t.holdTime} {sortIcon('holdTime')}
                                                             </th>
-                                                            <th className="text-right">Comm</th>
+                                                            <th className="text-right">{t.comm}</th>
                                                             <th
                                                                 className={`text-right sortable-header ${sortConfig?.key === 'netPnL' ? 'sort-active' : ''}`}
                                                                 onClick={() => handleSort('netPnL')}
                                                             >
-                                                                Net PnL {sortIcon('netPnL')}
+                                                                {t.netPnl} {sortIcon('netPnL')}
                                                             </th>
                                                         </tr>
                                                     </thead>
@@ -238,6 +240,7 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
                     trade={selectedTrade}
                     onClose={() => setSelectedTrade(null)}
                     onUpdateStatus={handleUpdateImageStatus}
+                    t={t}
                 />
             )}
         </div>

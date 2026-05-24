@@ -4,6 +4,7 @@ import { X, UploadCloud } from 'lucide-react';
 import { BrokerAdapter } from '../adapters/BrokerAdapter';
 import { IBKRAdapter } from '../adapters/ibkrAdapter';
 import { TradingViewAdapter } from '../adapters/tradingViewAdapter';
+import { Translation } from '../i18n';
 
 const AVAILABLE_BROKERS: BrokerAdapter[] = [
     IBKRAdapter,
@@ -13,9 +14,10 @@ const AVAILABLE_BROKERS: BrokerAdapter[] = [
 interface UploadModalProps {
     onClose: () => void;
     onSuccess: (batch: UploadBatch, trades: RawTrade[]) => void;
+    t: Translation;
 }
 
-const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
+const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, t }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +54,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
 
             onSuccess(modifiedBatch, trades);
         } catch (e: any) {
-            setError(e.message || "Failed to parse CSV file. Ensure it is the correct IBKR format.");
+            setError(e.message || t.parseError);
         } finally {
             setIsLoading(false);
         }
@@ -85,11 +87,11 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
         <div className="modal-overlay">
             <div className="modal-content">
                 <button className="modal-close" onClick={onClose}><X size={20} /></button>
-                <h2>Import Trade History</h2>
-                <p className="text-muted mb-4">Upload your broker CSV/Excel export containing trade executions.</p>
+                <h2>{t.importTradeHistory}</h2>
+                <p className="text-muted mb-4">{t.uploadBrokerCsv}</p>
 
                 <div className="broker-selector-container mb-6">
-                    <label className="text-sm text-muted mb-2 block">Select Broker Format (选择券商格式)</label>
+                    <label className="text-sm text-muted mb-2 block">{t.brokerFormat}</label>
                     <div className="broker-grid">
                         {AVAILABLE_BROKERS.map(broker => (
                             <div 
@@ -97,8 +99,8 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
                                 className={`broker-card ${selectedBroker === broker.id ? 'active' : ''}`}
                                 onClick={() => setSelectedBroker(broker.id)}
                             >
-                                <div className="broker-name">{broker.name}</div>
-                                <div className="broker-desc">{broker.description}</div>
+                                <div className="broker-name">{t.brokerName(broker.id, broker.name)}</div>
+                                <div className="broker-desc">{t.brokerDescription(broker.id, broker.description)}</div>
                             </div>
                         ))}
                     </div>
@@ -111,15 +113,15 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
                     onDrop={handleDrop}
                 >
                     <UploadCloud size={48} className="drop-icon" />
-                    <h3>Drag & Drop CSV File</h3>
-                    <p>or</p>
+                    <h3>{t.dragDropCsv}</h3>
+                    <p>{t.or}</p>
                     <label className="btn btn-secondary mt-2">
-                        Browse File
+                        {t.browseFile}
                         <input type="file" accept=".csv" onChange={handleFileChange} hidden />
                     </label>
                 </div>
 
-                {isLoading && <div className="mt-4 text-accent text-center">Parsing file...</div>}
+                {isLoading && <div className="mt-4 text-accent text-center">{t.parsingFile}</div>}
                 {error && <div className="mt-4 text-red text-center">{error}</div>}
             </div>
         </div>

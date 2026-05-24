@@ -5,9 +5,11 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { ClosedTrade } from '../types';
 import ImageUploadModal from './ImageUploadModal';
 import { StorageService } from '../services/storageService';
+import { Translation } from '../i18n';
 
 interface Props {
     dailyStats: DailyStat[];
+    t: Translation;
 }
 
 type ViewLevel = 'day' | 'month' | 'year';
@@ -39,7 +41,7 @@ const getTradeDirectionClass = (trade: ClosedTrade) => {
     return trade.side === 'Long' ? 'text-green' : 'text-red';
 };
 
-const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
+const DailyPnLCalendar: React.FC<Props> = ({ dailyStats, t }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState<DailyStat | null>(null);
     const [isClosing, setIsClosing] = useState(false);
@@ -174,7 +176,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
         return map;
     }, [dailyStats, currentMonth]);
 
-    const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsList = t.months;
 
     // YEAR VIEW LOGIC
     const yearlyStats = useMemo(() => {
@@ -223,7 +225,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                 <div
                     className={`flex items-center gap-2 ${viewLevel !== 'year' ? 'cursor-pointer hover:text-accent transition-colors' : ''}`}
                     onClick={handleHeaderClick}
-                    title={viewLevel !== 'year' ? "Zoom out" : ""}
+                    title={viewLevel !== 'year' ? t.zoomOut : ""}
                 >
                     <h3 className="text-xl font-bold">
                         {viewLevel === 'day' && format(currentMonth, 'MMMM yyyy')}
@@ -243,7 +245,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                 {/* DAY LEVEL CALENDAR */}
                 {viewLevel === 'day' && (
                     <div className="calendar-grid">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+                        {t.weekdays.map(d => (
                             <div key={d} className="calendar-weekday text-center text-sm text-muted py-2">{d}</div>
                         ))}
 
@@ -262,7 +264,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                                             <span className={`font-bold ${stat.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
                                                 ${stat.netPnL.toFixed(0)}
                                             </span>
-                                            <span className="text-xs text-muted">{stat.tradesCount} trades</span>
+                                            <span className="text-xs text-muted">{t.tradeCountShort(stat.tradesCount)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -296,7 +298,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                                             <span className={`font-bold text-xl ${stat.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
                                                 ${stat.netPnL.toFixed(0)}
                                             </span>
-                                            <span className="text-xs text-muted mt-1">{stat.tradesCount} trades</span>
+                                            <span className="text-xs text-muted mt-1">{t.tradeCountShort(stat.tradesCount)}</span>
                                         </>
                                     ) : (
                                         <span className="text-muted text-sm">-</span>
@@ -332,7 +334,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                                             <span className={`font-bold text-xl ${stat.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
                                                 ${stat.netPnL.toFixed(0)}
                                             </span>
-                                            <span className="text-xs text-muted mt-1">{stat.tradesCount} trades</span>
+                                            <span className="text-xs text-muted mt-1">{t.tradeCountShort(stat.tradesCount)}</span>
                                         </>
                                     ) : (
                                         <span className="text-muted text-sm">-</span>
@@ -348,38 +350,38 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
             {selectedDay && (
                 <div className={`modal-overlay ${isClosing ? 'closing' : ''}`} onClick={handleClose}>
                     <div className={`modal-content ${isClosing ? 'closing' : ''}`} onClick={e => e.stopPropagation()}>
-                        <button className="modal-close" onClick={handleClose} title="Close"><X size={18} /></button>
-                        <h2 className="mb-4 text-xl">Trades for {selectedDay.dateStr}</h2>
+                        <button className="modal-close" onClick={handleClose} title={t.close}><X size={18} /></button>
+                        <h2 className="mb-4 text-xl">{t.tradesFor(selectedDay.dateStr)}</h2>
                         <div className="flex gap-4 mb-6">
-                            <span className="px-3 py-1 bg-panel rounded text-sm">Trades: {selectedDay.tradesCount}</span>
+                            <span className="px-3 py-1 bg-panel rounded text-sm">{t.trades}: {selectedDay.tradesCount}</span>
                             <span className={`px-3 py-1 bg-panel rounded text-sm font-bold ${selectedDay.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
-                                Net PnL: ${selectedDay.netPnL.toFixed(2)}
+                                {t.netPnl}: ${selectedDay.netPnL.toFixed(2)}
                             </span>
                         </div>
                         <div className="trades-table-wrapper" style={{ overflowX: 'auto', flex: 1 }}>
                             <table className="trades-table">
                                 <thead>
                                     <tr>
-                                        <th>Symbol</th>
-                                        <th>Side</th>
-                                        <th className="text-right">Qty</th>
-                                        <th className="text-right">Entry</th>
-                                        <th className="text-right">Exit</th>
-                                        <th className="text-right">Points</th>
+                                        <th>{t.symbol}</th>
+                                        <th>{t.side}</th>
+                                        <th className="text-right">{t.qty}</th>
+                                        <th className="text-right">{t.entry}</th>
+                                        <th className="text-right">{t.exit}</th>
+                                        <th className="text-right">{t.points}</th>
                                         <th
                                             className={`sortable-header${sortConfig?.key === 'entryDate' ? ' sort-active' : ''}`}
                                             onClick={() => handleSort('entryDate')}
-                                        >Entry Time {sortIcon('entryDate')}</th>
-                                        <th>Exit Time</th>
+                                        >{t.entryTime} {sortIcon('entryDate')}</th>
+                                        <th>{t.exitTime}</th>
                                         <th
                                             className={`sortable-header${sortConfig?.key === 'holdTime' ? ' sort-active' : ''}`}
                                             onClick={() => handleSort('holdTime')}
-                                        >Hold Time {sortIcon('holdTime')}</th>
-                                        <th className="text-right">Comm</th>
+                                        >{t.holdTime} {sortIcon('holdTime')}</th>
+                                        <th className="text-right">{t.comm}</th>
                                         <th
                                             className={`text-right sortable-header${sortConfig?.key === 'netPnL' ? ' sort-active' : ''}`}
                                             onClick={() => handleSort('netPnL')}
-                                        >Net PnL {sortIcon('netPnL')}</th>
+                                        >{t.netPnl} {sortIcon('netPnL')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -424,6 +426,7 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                     trade={selectedTrade}
                     onClose={() => setSelectedTrade(null)}
                     onUpdateStatus={handleUpdateImageStatus}
+                    t={t}
                 />
             )}
         </div>

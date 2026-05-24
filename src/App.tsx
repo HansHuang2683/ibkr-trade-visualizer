@@ -9,6 +9,7 @@ import UploadedFilesTable from './components/UploadedFilesTable';
 import AccountSelector from './components/AccountSelector';
 import MetricTooltip from './components/MetricTooltip';
 import { Upload, Trash2, LayoutDashboard, Database } from 'lucide-react';
+import { Language, translations } from './i18n';
 
 function App() {
     const [rawTrades, setRawTrades] = useState<RawTrade[]>([]);
@@ -26,6 +27,14 @@ function App() {
 
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [language, setLanguage] = useState<Language>(() => {
+        return (localStorage.getItem('trade_visual_language') as Language) || 'en';
+    });
+    const t = translations[language];
+
+    useEffect(() => {
+        localStorage.setItem('trade_visual_language', language);
+    }, [language]);
 
     useEffect(() => {
         initializeData();
@@ -40,7 +49,7 @@ function App() {
 
             // If still no accounts (brand new user), create one
             if (allAccounts.length === 0) {
-                await StorageService.createAccount("Default Account");
+                await StorageService.createAccount(t.defaultAccount);
                 allAccounts = await StorageService.getAccounts();
             }
 
@@ -105,19 +114,19 @@ function App() {
     const handleUploadSuccess = async (batch: any, newTrades: RawTrade[]) => {
         // Ensure the batch gets tied to the current active account
         if (!activeAccountId) {
-            alert("No active account selected for import.");
+            alert(t.noActiveAccount);
             return;
         }
         batch.accountId = activeAccountId;
 
         const addedCount = await StorageService.saveTradesAndBatch(batch, newTrades);
-        alert(`Successfully imported ${addedCount} new trades from ${batch.fileName} (ignored duplicates).`);
+        alert(t.importSuccess(addedCount, batch.fileName));
         loadData();
         setIsUploadModalOpen(false);
     };
 
     const handleClearData = async () => {
-        if (window.confirm("Are you sure you want to clear ALL trading data for ALL accounts? This cannot be undone.")) {
+        if (window.confirm(t.clearConfirm)) {
             try {
                 await StorageService.clearAll();
                 setRawTrades([]);
@@ -125,9 +134,9 @@ function App() {
                 setBatches([]);
                 setAccounts([]);
                 setActiveAccountId(null);
-                alert("Data cleared successfully. The app is now fully factory reset.");
+                alert(t.clearSuccess);
             } catch (e) {
-                alert("Error clearing data. Please refresh the page and try again.");
+                alert(t.clearError);
                 console.error(e);
             }
         }
@@ -138,13 +147,13 @@ function App() {
             await StorageService.deleteBatch(fileId);
             loadData();
         } catch (e) {
-            alert("Error deleting the file data.");
+            alert(t.deleteFileError);
             console.error(e);
         }
     };
 
     if (isLoading) {
-        return <div className="loading-screen">Loading Data...</div>;
+        return <div className="loading-screen">{t.loadingData}</div>;
     }
 
     return (
@@ -161,6 +170,7 @@ function App() {
                         activeAccountId={activeAccountId}
                         onSelectAccount={setActiveAccountId}
                         setAccounts={setAccounts}
+                        t={t}
                     />
                 )}
 
@@ -169,33 +179,33 @@ function App() {
                         className={`menu-btn ${currentTab === 'dashboard' ? 'active' : ''}`}
                         onClick={() => setCurrentTab('dashboard')}
                     >
-                        <LayoutDashboard size={18} /> Dashboard
+                        <LayoutDashboard size={18} /> {t.dashboard}
                     </button>
                     <button
                         className={`menu-btn ${currentTab === 'history' ? 'active' : ''}`}
                         onClick={() => setCurrentTab('history')}
                     >
-                        <Database size={18} /> Data Management
+                        <Database size={18} /> {t.dataManagement}
                     </button>
                 </div>
 
                 <div className="sidebar-bottom">
                     <button className="btn btn-primary" onClick={() => setIsUploadModalOpen(true)}>
-                        <Upload size={18} /> Import CSV
+                        <Upload size={18} /> {t.importCsv}
                     </button>
                     <button className="btn btn-danger" onClick={handleClearData}>
-                        <Trash2 size={18} /> Clear Data
+                        <Trash2 size={18} /> {t.clearData}
                     </button>
                 </div>
             </nav>
 
             <main className="main-content">
                 <header className="top-header">
-                    <h1>{currentTab === 'dashboard' ? 'Trading Dashboard' : 'Data Management'}</h1>
+                    <h1>{currentTab === 'dashboard' ? t.tradingDashboard : t.dataManagement}</h1>
                     {currentTab === 'dashboard' && closedTrades.length > 0 && (
                         <div className="flex items-center gap-4 ml-6">
                             <div className="flex items-center gap-2">
-                                <label className="text-sm text-muted">From:</label>
+                                <label className="text-sm text-muted">{t.from}</label>
                                 <input
                                     type="date"
                                     className="date-input"
@@ -204,7 +214,7 @@ function App() {
                                 />
                             </div>
                             <div className="flex items-center gap-2">
-                                <label className="text-sm text-muted">To:</label>
+                                <label className="text-sm text-muted">{t.to}</label>
                                 <input
                                     type="date"
                                     className="date-input"
@@ -216,13 +226,21 @@ function App() {
                     )}
                     {currentTab === 'dashboard' && (
                         <div className="header-stats flex items-center gap-6" style={{ marginLeft: 'auto' }}>
+                            <div className="language-toggle" aria-label="Language selector">
+                                <button className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')} type="button">
+                                    EN
+                                </button>
+                                <button className={language === 'zh' ? 'active' : ''} onClick={() => setLanguage('zh')} type="button">
+                                    中
+                                </button>
+                            </div>
                             <MetricTooltip
-                                title="Total Commission (总手续费)"
-                                description="选中日期范围内的总交易成本。"
+                                title={t.totalCommission}
+                                description={t.totalCommissionDesc}
                                 metrics={[]}
                             >
                                 <div className="flex items-center gap-2 cursor-help">
-                                    <span className="text-muted">Commission: </span>
+                                    <span className="text-muted">{t.commission} </span>
                                     <span className="text-red font-bold">
                                         ${overallStats?.totalCommission.toFixed(2) || '0.00'}
                                     </span>
@@ -230,12 +248,12 @@ function App() {
                             </MetricTooltip>
 
                             <MetricTooltip
-                                title="Net PnL (净盈亏)"
-                                description="扣除所有手续费后的最终净利润。"
+                                title={t.netPnl}
+                                description={t.netPnlDesc}
                                 metrics={[]}
                             >
                                 <div className="flex items-center gap-2 cursor-help">
-                                    <span className="text-muted">Filtered PnL: </span>
+                                    <span className="text-muted">{t.filteredPnl} </span>
                                     <span className={overallStats && overallStats.totalNetPnL >= 0 ? 'text-green font-bold' : 'text-red font-bold'}>
                                         ${overallStats?.totalNetPnL.toFixed(2) || '0.00'}
                                     </span>
@@ -249,10 +267,10 @@ function App() {
                     {rawTrades.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-icon"><Upload size={48} /></div>
-                            <h3>No Trading Data Found</h3>
-                            <p>Import your Interactive Brokers CSV to generate insights.</p>
+                            <h3>{t.noTradingData}</h3>
+                            <p>{t.importPrompt}</p>
                             <button className="btn btn-primary mt-4" onClick={() => setIsUploadModalOpen(true)}>
-                                Upload File
+                                {t.uploadFile}
                             </button>
                         </div>
                     ) : (
@@ -262,6 +280,7 @@ function App() {
                                     closedTrades={closedTrades}
                                     dailyStats={dailyStats}
                                     overallStats={overallStats!}
+                                    t={t}
                                 />
                             )}
                             {currentTab === 'history' && (
@@ -269,6 +288,7 @@ function App() {
                                     <UploadedFilesTable
                                         batches={batches}
                                         onDeleteBatch={handleDeleteBatch}
+                                        t={t}
                                     />
                                 </div>
                             )}
@@ -281,6 +301,7 @@ function App() {
                 <UploadModal
                     onClose={() => setIsUploadModalOpen(false)}
                     onSuccess={handleUploadSuccess}
+                    t={t}
                 />
             )}
         </div>

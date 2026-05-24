@@ -2,15 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import { Account } from '../types';
 import { StorageService } from '../services/storageService';
 import { ChevronDown, Plus, Trash2, Check, X, Wallet } from 'lucide-react';
+import { Translation } from '../i18n';
 
 interface Props {
     accounts: Account[];
     activeAccountId: string;
     onSelectAccount: (id: string) => void;
     setAccounts: (accounts: Account[]) => void;
+    t: Translation;
 }
 
-const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccounts }: Props) => {
+const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccounts, t }: Props) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [newAccountName, setNewAccountName] = useState('');
@@ -44,10 +46,10 @@ const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccoun
 
     const handleDeleteAccount = async (id: string, name: string) => {
         if (accounts.length <= 1) {
-            alert("You cannot delete your only account.");
+            alert(t.onlyAccountDeleteError);
             return;
         }
-        if (window.confirm(`Delete account "${name}" and ALL its data? This cannot be undone.`)) {
+        if (window.confirm(t.deleteAccountConfirm(name))) {
             await StorageService.deleteAccount(id);
             const updatedAccounts = await StorageService.getAccounts();
             setAccounts(updatedAccounts);
@@ -64,11 +66,11 @@ const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccoun
             <button
                 className="account-selector-btn"
                 onClick={() => setIsMenuOpen(v => !v)}
-                title="Switch Account"
+                title={t.switchAccount}
             >
                 <div className="account-selector-btn-left">
                     <Wallet size={14} className="account-icon" />
-                    <span className="account-name">{activeAccount?.name || 'Accounts'}</span>
+                    <span className="account-name">{activeAccount?.name || t.accounts}</span>
                 </div>
                 <ChevronDown size={14} className={`account-chevron ${isMenuOpen ? 'open' : ''}`} />
             </button>
@@ -101,7 +103,7 @@ const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccoun
                                             e.stopPropagation();
                                             handleDeleteAccount(acc.id, acc.name);
                                         }}
-                                        title="Delete Account"
+                                        title={t.deleteAccount}
                                     >
                                         <Trash2 size={13} />
                                     </button>
@@ -117,7 +119,7 @@ const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccoun
                                 <input
                                     type="text"
                                     className="account-create-input"
-                                    placeholder="Account name..."
+                                    placeholder={t.accountNamePlaceholder}
                                     value={newAccountName}
                                     onChange={e => setNewAccountName(e.target.value)}
                                     autoFocus
@@ -136,7 +138,7 @@ const AccountSelector = ({ accounts, activeAccountId, onSelectAccount, setAccoun
                         ) : (
                             <button className="account-new-btn" onClick={() => setIsCreating(true)}>
                                 <Plus size={14} />
-                                <span>New Account</span>
+                                <span>{t.newAccount}</span>
                             </button>
                         )}
                     </div>
