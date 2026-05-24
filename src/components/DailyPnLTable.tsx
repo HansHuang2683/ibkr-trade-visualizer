@@ -14,10 +14,12 @@ interface Props {
 
 type SortKey = 'entryDate' | 'holdTime' | 'netPnL';
 
-const getHoldMinutes = (entryDate: Date, exitDate: Date) =>
-    Math.round((exitDate.getTime() - entryDate.getTime()) / 60000);
+const getHoldSeconds = (entryDate: Date, exitDate: Date) =>
+    Math.max(0, Math.round((exitDate.getTime() - entryDate.getTime()) / 1000));
 
-const formatHoldTime = (minutes: number) => {
+const formatHoldTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.round(seconds / 60);
     if (minutes < 60) return `${minutes}m`;
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
@@ -90,8 +92,8 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t }) => {
             if (sortConfig.key === 'entryDate') {
                 aVal = a.entryDate.getTime(); bVal = b.entryDate.getTime();
             } else if (sortConfig.key === 'holdTime') {
-                aVal = getHoldMinutes(a.entryDate, a.exitDate);
-                bVal = getHoldMinutes(b.entryDate, b.exitDate);
+                aVal = getHoldSeconds(a.entryDate, a.exitDate);
+                bVal = getHoldSeconds(b.entryDate, b.exitDate);
             } else {
                 aVal = a.netPnL; bVal = b.netPnL;
             }
@@ -214,9 +216,9 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t }) => {
                                                                 <td className={`text-right font-medium ${trade.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
                                                                     {formatTradePoints(trade)}
                                                                 </td>
-                                                                <td className="text-xs text-muted">{format(trade.entryDate, 'HH:mm')}</td>
-                                                                <td className="text-xs text-muted">{format(trade.exitDate, 'HH:mm')}</td>
-                                                                <td className="text-xs text-muted">{formatHoldTime(getHoldMinutes(trade.entryDate, trade.exitDate))}</td>
+                                                                <td className="text-xs text-muted">{format(trade.entryDate, 'HH:mm:ss')}</td>
+                                                                <td className="text-xs text-muted">{format(trade.exitDate, 'HH:mm:ss')}</td>
+                                                                <td className="text-xs text-muted">{formatHoldTime(getHoldSeconds(trade.entryDate, trade.exitDate))}</td>
                                                                 <td className="text-right text-xs">${trade.commission.toFixed(2)}</td>
                                                                 <td className={`text-right font-bold ${trade.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
                                                                     ${trade.netPnL.toFixed(2)}
