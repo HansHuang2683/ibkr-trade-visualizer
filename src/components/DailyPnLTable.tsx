@@ -1,8 +1,10 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect } from 'react';
 import { DailyStat } from '../utils/statistics';
 import { ClosedTrade } from '../types';
-import { ChevronDown, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, ChevronRight, ArrowUpDown, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import ImageUploadModal from './ImageUploadModal';
+import { StorageService } from '../services/storageService';
 
 interface Props {
     dailyStats: DailyStat[];
@@ -20,11 +22,44 @@ const formatHoldTime = (minutes: number) => {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
 };
 
+const formatTradePrice = (trade: ClosedTrade, value: number) =>
+    trade.isCashEvent || value === 0 ? '-' : value.toString();
+
+const formatTradePoints = (trade: ClosedTrade) => {
+    if (trade.isCashEvent) return '-';
+    const points = trade.side === 'Long'
+        ? trade.exitPrice - trade.entryPrice
+        : trade.entryPrice - trade.exitPrice;
+    return points.toFixed(2);
+};
+
+const getTradeDirectionClass = (trade: ClosedTrade) => {
+    if (trade.isCashEvent) return 'text-muted';
+    return trade.side === 'Long' ? 'text-green' : 'text-red';
+};
+
 const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
-
-    // Sorting state for the inner trades table
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' } | null>(null);
+
+    // Image Modal State
+    const [selectedTrade, setSelectedTrade] = useState<ClosedTrade | null>(null);
+    const [tradesWithImages, setTradesWithImages] = useState<Set<string>>(new Set());
+
+    // Refresh image status for visible trades
+    useEffect(() => {
+        const checkImages = async () => {
+            const hasImagesSet = new Set<string>();
+            const allClosedTrades = dailyStats.flatMap(s => s.closedTrades);
+
+            for (const trade of allClosedTrades) {
+                const has = await StorageService.getTradeHasImages(trade.id);
+                if (has) hasImagesSet.add(trade.id);
+            }
+            setTradesWithImages(hasImagesSet);
+        };
+        checkImages();
+    }, [dailyStats]);
 
     const handleDayClick = (dateStr: string) => {
         if (expandedDate === dateStr) setExpandedDate(null);
@@ -59,6 +94,28 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
                 aVal = a.netPnL; bVal = b.netPnL;
             }
             return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+        });
+    };
+
+    const handleSymbolClick = (e: React.MouseEvent, trade: ClosedTrade) => {
+        e.stopPropagation();
+        setSelectedTrade(trade);
+    };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setSelectedTrade(null);
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, []);
+
+    const handleUpdateImageStatus = (tradeId: string, hasImages: boolean) => {
+        setTradesWithImages(prev => {
+            const next = new Set(prev);
+            if (hasImages) next.add(tradeId);
+            else next.delete(tradeId);
+            return next;
         });
     };
 
@@ -137,13 +194,23 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
                                                     <tbody>
                                                         {sortedTrades(day.closedTrades).map((trade) => (
                                                             <tr key={trade.id}>
-                                                                <td>{trade.symbol}</td>
-                                                                <td className={trade.side === 'Long' ? 'text-green' : 'text-red'}>{trade.side}</td>
+                                                                <td
+                                                                    className="symbol-clickable"
+                                                                    onClick={(e) => handleSymbolClick(e, trade)}
+                                                                >
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span>{trade.symbol}</span>
+                                                                        {tradesWithImages.has(trade.id) && (
+                                                                            <ImageIcon size={14} className="text-muted" />
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className={getTradeDirectionClass(trade)}>{trade.transactionType || trade.side}</td>
                                                                 <td className="text-right">{trade.qty}</td>
-                                                                <td className="text-right">{trade.entryPrice}</td>
-                                                                <td className="text-right">{trade.exitPrice}</td>
-                                                                <td className={`text-right font-medium ${(trade.side === 'Long' ? trade.exitPrice - trade.entryPrice : trade.entryPrice - trade.exitPrice) >= 0 ? 'text-green' : 'text-red'}`}>
-                                                                    {(trade.side === 'Long' ? trade.exitPrice - trade.entryPrice : trade.entryPrice - trade.exitPrice).toFixed(2)}
+                                                                <td className="text-right">{formatTradePrice(trade, trade.entryPrice)}</td>
+                                                                <td className="text-right">{formatTradePrice(trade, trade.exitPrice)}</td>
+                                                                <td className={`text-right font-medium ${trade.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
+                                                                    {formatTradePoints(trade)}
                                                                 </td>
                                                                 <td className="text-xs text-muted">{format(trade.entryDate, 'HH:mm')}</td>
                                                                 <td className="text-xs text-muted">{format(trade.exitDate, 'HH:mm')}</td>
@@ -165,6 +232,14 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats }) => {
                     })}
                 </tbody>
             </table>
+
+            {selectedTrade && (
+                <ImageUploadModal
+                    trade={selectedTrade}
+                    onClose={() => setSelectedTrade(null)}
+                    onUpdateStatus={handleUpdateImageStatus}
+                />
+            )}
         </div>
     );
 };

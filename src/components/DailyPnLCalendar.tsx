@@ -1,7 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import { DailyStat } from '../utils/statistics';
-import { ChevronLeft, ChevronRight, X, ZoomOut, ArrowUpDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ZoomOut, ArrowUpDown, Image as ImageIcon } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths, addYears, subYears } from 'date-fns';
+import { ClosedTrade } from '../types';
+import ImageUploadModal from './ImageUploadModal';
+import { StorageService } from '../services/storageService';
 
 interface Props {
     dailyStats: DailyStat[];
@@ -20,12 +23,47 @@ const formatHoldTime = (minutes: number) => {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
 };
 
+const formatTradePrice = (trade: ClosedTrade, value: number) =>
+    trade.isCashEvent || value === 0 ? '-' : value.toString();
+
+const formatTradePoints = (trade: ClosedTrade) => {
+    if (trade.isCashEvent) return '-';
+    const points = trade.side === 'Long'
+        ? trade.exitPrice - trade.entryPrice
+        : trade.entryPrice - trade.exitPrice;
+    return points.toFixed(2);
+};
+
+const getTradeDirectionClass = (trade: ClosedTrade) => {
+    if (trade.isCashEvent) return 'text-muted';
+    return trade.side === 'Long' ? 'text-green' : 'text-red';
+};
+
 const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState<DailyStat | null>(null);
     const [isClosing, setIsClosing] = useState(false);
     const [viewLevel, setViewLevel] = useState<ViewLevel>('day');
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
+
+    // Image Modal State
+    const [selectedTrade, setSelectedTrade] = useState<ClosedTrade | null>(null);
+    const [tradesWithImages, setTradesWithImages] = useState<Set<string>>(new Set());
+
+    // Refresh image status for visible trades
+    useEffect(() => {
+        const checkImages = async () => {
+            const hasImagesSet = new Set<string>();
+            const allClosedTrades = dailyStats.flatMap(s => s.closedTrades);
+
+            for (const trade of allClosedTrades) {
+                const has = await StorageService.getTradeHasImages(trade.id);
+                if (has) hasImagesSet.add(trade.id);
+            }
+            setTradesWithImages(hasImagesSet);
+        };
+        checkImages();
+    }, [dailyStats]);
 
     const handleClose = () => {
         setIsClosing(true);
@@ -38,11 +76,15 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
     // ESC 键全局监听
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') handleClose();
+            if (e.key === 'Escape') {
+                // If the inner image modal is open, let it handle Esc
+                if (selectedTrade) return;
+                handleClose();
+            }
         };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, []);
+        window.addEventListener('keydown', handleEsc, true); // Use capture phase or check state
+        return () => window.removeEventListener('keydown', handleEsc, true);
+    }, [selectedTrade]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(prev => {
@@ -72,6 +114,20 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                 aVal = a.netPnL; bVal = b.netPnL;
             }
             return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+        });
+    };
+
+    const handleSymbolClick = (e: React.MouseEvent, trade: ClosedTrade) => {
+        e.stopPropagation();
+        setSelectedTrade(trade);
+    };
+
+    const handleUpdateImageStatus = (tradeId: string, hasImages: boolean) => {
+        setTradesWithImages(prev => {
+            const next = new Set(prev);
+            if (hasImages) next.add(tradeId);
+            else next.delete(tradeId);
+            return next;
         });
     };
 
@@ -329,13 +385,23 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                                 <tbody>
                                     {sortedTrades(selectedDay.closedTrades).map((trade) => (
                                         <tr key={trade.id}>
-                                            <td>{trade.symbol}</td>
-                                            <td className={trade.side === 'Long' ? 'text-green' : 'text-red'}>{trade.side}</td>
+                                            <td
+                                                className="symbol-clickable"
+                                                onClick={(e) => handleSymbolClick(e, trade)}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>{trade.symbol}</span>
+                                                    {tradesWithImages.has(trade.id) && (
+                                                        <ImageIcon size={14} className="text-muted" />
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className={getTradeDirectionClass(trade)}>{trade.transactionType || trade.side}</td>
                                             <td className="text-right">{trade.qty}</td>
-                                            <td className="text-right">{trade.entryPrice}</td>
-                                            <td className="text-right">{trade.exitPrice}</td>
-                                            <td className={`text-right font-medium ${(trade.side === 'Long' ? trade.exitPrice - trade.entryPrice : trade.entryPrice - trade.exitPrice) >= 0 ? 'text-green' : 'text-red'}`}>
-                                                {(trade.side === 'Long' ? trade.exitPrice - trade.entryPrice : trade.entryPrice - trade.exitPrice).toFixed(2)}
+                                            <td className="text-right">{formatTradePrice(trade, trade.entryPrice)}</td>
+                                            <td className="text-right">{formatTradePrice(trade, trade.exitPrice)}</td>
+                                            <td className={`text-right font-medium ${trade.netPnL >= 0 ? 'text-green' : 'text-red'}`}>
+                                                {formatTradePoints(trade)}
                                             </td>
                                             <td className="text-xs text-muted">{format(trade.entryDate, 'HH:mm')}</td>
                                             <td className="text-xs text-muted">{format(trade.exitDate, 'HH:mm')}</td>
@@ -351,6 +417,14 @@ const DailyPnLCalendar: React.FC<Props> = ({ dailyStats }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {selectedTrade && (
+                <ImageUploadModal
+                    trade={selectedTrade}
+                    onClose={() => setSelectedTrade(null)}
+                    onUpdateStatus={handleUpdateImageStatus}
+                />
             )}
         </div>
     );

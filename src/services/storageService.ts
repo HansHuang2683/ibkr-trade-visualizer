@@ -1,13 +1,17 @@
 import localforage from 'localforage';
-import { RawTrade, UploadBatch, Account } from '../types';
+import { RawTrade, UploadBatch, Account, TradeImage } from '../types';
 
 const STORE_KEY = 'trade_history_raw_trades';
 const BATCHES_KEY = 'trade_history_batches';
 const ACCOUNTS_KEY = 'trade_history_accounts';
+const IMAGES_KEY = 'trade_history_images';
 
-/**
- * Ensures localforage is configured.
- */
+// Separate store for images to keep main metadata fast
+const imagesStore = localforage.createInstance({
+    name: 'TradeHistoryVisualizer',
+    storeName: 'images'
+});
+
 localforage.config({
     name: 'TradeHistoryVisualizer',
     storeName: 'trades'
@@ -191,5 +195,38 @@ export const StorageService = {
             }
         }
         return migrated;
+    },
+
+    /**
+     * Image Management
+     */
+    async getTradeImages(tradeId: string): Promise<TradeImage[]> {
+        const allImages = await imagesStore.getItem<TradeImage[]>(IMAGES_KEY) || [];
+        return allImages.filter(img => img.tradeId === tradeId);
+    },
+
+    async saveTradeImage(image: TradeImage): Promise<void> {
+        const allImages = await imagesStore.getItem<TradeImage[]>(IMAGES_KEY) || [];
+        allImages.push(image);
+        await imagesStore.setItem(IMAGES_KEY, allImages);
+    },
+
+    async deleteTradeImage(imageId: string): Promise<void> {
+        const allImages = await imagesStore.getItem<TradeImage[]>(IMAGES_KEY) || [];
+        const filtered = allImages.filter(img => img.id !== imageId);
+        await imagesStore.setItem(IMAGES_KEY, filtered);
+    },
+
+    /**
+     * Updates the hasImages flag on a ClosedTrade in local storage if needed.
+     */
+    async setTradeHasImages(tradeId: string, has: boolean): Promise<void> {
+        const key = `has_images_${tradeId}`;
+        await localforage.setItem(key, has);
+    },
+
+    async getTradeHasImages(tradeId: string): Promise<boolean> {
+        const key = `has_images_${tradeId}`;
+        return (await localforage.getItem<boolean>(key)) || false;
     }
 };

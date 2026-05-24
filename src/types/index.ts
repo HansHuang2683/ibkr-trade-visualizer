@@ -15,6 +15,10 @@ export interface RawTrade {
     date: Date;
     commission: number;
     netAmount: number;
+    realizedPnL?: number;
+    realizedGrossPnL?: number;
+    transactionType?: string;
+    isCashEvent?: boolean;
 }
 
 export interface UploadBatch {
@@ -38,4 +42,15 @@ export interface ClosedTrade {
     commission: number;
     grossPnL: number;
     netPnL: number;
+    transactionType?: string;
+    isCashEvent?: boolean;
+    hasImages?: boolean; // New: indicator for screenshots
+}
+
+export interface TradeImage {
+    id: string;
+    tradeId: string;
+    data: string; // Base64 image data
+    name: string;
+    timestamp: number;
 }

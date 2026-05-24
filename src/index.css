@@ -1219,6 +1219,130 @@ th {
     display: block;
 }
 
+/* Image Upload & Journaling */
+.symbol-clickable {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.symbol-clickable:hover {
+    color: var(--blue);
+    text-decoration: underline;
+}
+
+.image-upload-modal {
+    max-width: 800px;
+    width: 90%;
+}
+
+.upload-dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 2.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+
+.upload-dropzone.dragging {
+    border-color: var(--blue);
+    background: rgba(59, 130, 246, 0.1);
+    transform: scale(1.01);
+}
+
+.image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.gallery-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-item-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.gallery-item:hover .gallery-item-overlay {
+    opacity: 1;
+}
+
+.maximize-icon {
+    color: white;
+    pointer-events: none;
+}
+
+.empty-gallery {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+/* Lightbox */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 95vw;
+    max-height: 90vh;
+}
+
+.lightbox-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.animate-scale-up {
+    animation: modalScaleUp 0.3s ease-out forwards;
+}
+
 .tooltip-content {
     position: absolute;
     top: 110%;
@@ -1323,4 +1447,55 @@ th {
         opacity: 1;
         transform: translate(-50%, 0) scale(1);
     }
+}
+/* Broker Selector */
+.broker-selector-container {
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 2rem;
+}
+
+.broker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.broker-card {
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+}
+
+.broker-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(41, 98, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.broker-card.active {
+    background: rgba(41, 98, 255, 0.12);
+    border-color: #2962ff;
+    box-shadow: 0 8px 24px rgba(41, 98, 255, 0.15);
+}
+
+.broker-name {
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.broker-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
 }
