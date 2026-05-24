@@ -911,6 +911,14 @@ th {
     background-color: rgba(255, 255, 255, 0.02);
 }
 
+.day-row.focused {
+    outline: 1px solid rgba(41, 98, 255, 0.7);
+    outline-offset: -1px;
+    background:
+        linear-gradient(90deg, rgba(41, 98, 255, 0.16), rgba(41, 98, 255, 0.02)),
+        rgba(255, 255, 255, 0.03);
+}
+
 .trades-detail-row {
     background-color: var(--bg-base);
 }

@@ -10,6 +10,7 @@ import { Translation } from '../i18n';
 interface Props {
     dailyStats: DailyStat[];
     t: Translation;
+    focusedDate?: string | null;
 }
 
 type SortKey = 'entryDate' | 'holdTime' | 'netPnL';
@@ -42,7 +43,7 @@ const getTradeDirectionClass = (trade: ClosedTrade) => {
     return trade.side === 'Long' ? 'text-green' : 'text-red';
 };
 
-const DailyPnLTable: React.FC<Props> = ({ dailyStats, t }) => {
+const DailyPnLTable: React.FC<Props> = ({ dailyStats, t, focusedDate }) => {
     const [expandedDate, setExpandedDate] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' } | null>(null);
 
@@ -64,6 +65,10 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t }) => {
         };
         checkImages();
     }, [dailyStats]);
+
+    useEffect(() => {
+        if (focusedDate) setExpandedDate(focusedDate);
+    }, [focusedDate]);
 
     const handleDayClick = (dateStr: string) => {
         if (expandedDate === dateStr) setExpandedDate(null);
@@ -139,10 +144,11 @@ const DailyPnLTable: React.FC<Props> = ({ dailyStats, t }) => {
                 <tbody>
                     {dailyStats.map((day) => {
                         const isExpanded = expandedDate === day.dateStr;
+                        const isFocused = focusedDate === day.dateStr;
                         return (
                             <Fragment key={day.dateStr}>
                                 <tr
-                                    className={`day-row ${isExpanded ? 'expanded' : ''} ${day.netPnL >= 0 ? 'row-green' : 'row-red'}`}
+                                    className={`day-row ${isExpanded ? 'expanded' : ''} ${isFocused ? 'focused' : ''} ${day.netPnL >= 0 ? 'row-green' : 'row-red'}`}
                                     onClick={() => handleDayClick(day.dateStr)}
                                 >
                                     <td className="text-center">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { ClosedTrade } from '../types';
 import { DailyStat, OverallStats } from '../utils/statistics';
@@ -20,12 +20,25 @@ interface Props {
 
 const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
     const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
+    const [focusedDate, setFocusedDate] = useState<string | null>(null);
+    const tradeLogRef = useRef<HTMLDivElement>(null);
     const formatCurrency = (value: number) => `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
     const drawdownStartLabel = overallStats.maxDrawdownStartDate ?? t.startOfPeriod;
     const drawdownEndLabel = overallStats.maxDrawdownEndDate ?? t.drawdownNoRange;
     const winHoldTime = overallStats.holdTimeWinSamples > 0
         ? `${Math.round(overallStats.avgHoldTimeWin)}m`
         : t.unavailable;
+
+    const dailyBarEvents = {
+        click: (params: { name?: string }) => {
+            if (!params.name) return;
+            setFocusedDate(params.name);
+            setViewMode('table');
+            window.setTimeout(() => {
+                tradeLogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+        }
+    };
     const lossHoldTime = overallStats.holdTimeLossSamples > 0
         ? `${Math.round(overallStats.avgHoldTimeLoss)}m`
         : t.unavailable;
@@ -347,11 +360,15 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                 </div>
                 <div className="chart-wrapper w-full">
                     <h3 className="mb-4 text-lg">{t.dailyNetPnl}</h3>
-                    <ReactECharts option={dailyBarOptions} style={{ height: '400px', width: '100%' }} />
+                    <ReactECharts
+                        option={dailyBarOptions}
+                        onEvents={dailyBarEvents}
+                        style={{ height: '400px', width: '100%' }}
+                    />
                 </div>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8" ref={tradeLogRef}>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg">{t.dailyPerformance}</h3>
                     <div className="segment-control">
@@ -370,7 +387,7 @@ const Dashboard: React.FC<Props> = ({ dailyStats, overallStats, t }) => {
                     </div>
                 </div>
                 {viewMode === 'table' ? (
-                    <DailyPnLTable dailyStats={dailyStats} t={t} />
+                    <DailyPnLTable dailyStats={dailyStats} t={t} focusedDate={focusedDate} />
                 ) : (
                     <DailyPnLCalendar dailyStats={dailyStats} t={t} />
                 )}
