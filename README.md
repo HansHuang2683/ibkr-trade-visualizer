@@ -33,7 +33,7 @@
 
 ### 推荐的 IBKR 报表下载方式
 
-如果你使用 Interactive Brokers，请下载 **活动报表 / Activity Statement** 的 CSV。不要使用 PDF、HTML，也不要只导出现金流水。
+如果你使用 Interactive Brokers，请下载 **活动报表 / Activity Statement** 的 CSV。不要使用 PDF、HTML、Excel，也不要只导出现金流水。
 
 ![IBKR 活动报表 CSV 下载位置](./docs/ibkr-activity-report-download.svg)
 
@@ -52,9 +52,38 @@
 IBKR Transaction History (Report)
 ```
 
+### 标准 CSV 模板
+
+如果你不是 IBKR 用户，或者你的券商只能导出普通成交记录，可以使用标准模板：
+
+[下载标准成交 CSV 模板](./docs/templates/standard-trades-template.csv)
+
+模板说明：
+
+[查看模板字段说明](./docs/templates/README.md)
+
+标准模板需要包含这些列：
+
+```csv
+Symbol,Side,Qty,Fill Price,Time,Commission,Net Amount
+```
+
+其中 `Side` 必须是 `Buy` 或 `Sell`，`Time` 推荐使用 `YYYY-MM-DD HH:mm:ss`。
+
 ### 收益口径
 
-对于 IBKR 活动报表，本项目会读取 CSV 里的 `交易` 明细段，并优先使用 IBKR 自带的 `已实现的损益` 字段计算已平仓交易收益。
+对于 IBKR 活动报表，本项目会读取 CSV 里的 `交易 / Trades` 明细段，把期货成交作为原始 Buy/Sell 执行流水导入，并使用 FIFO 复原已平仓交易。
+
+因此交易明细可以展示：
+
+- 开仓价
+- 平仓价
+- 点数
+- 开仓时间
+- 平仓时间
+- 持仓时间
+- 手续费
+- 每笔净盈亏
 
 不会计入交易收益的项目：
 
@@ -65,7 +94,7 @@ IBKR Transaction History (Report)
 - 现金报告
 - 应计利息变化
 
-如果报表期初已经有持仓，直接从报告期内成交做纯 FIFO 会缺少期初仓位成本，结果可能偏差很大。因此 IBKR 活动报表导入会以 IBKR 已实现损益为准；普通标准成交 CSV 仍使用 FIFO 撮合。
+注意：如果报表期初已经有持仓，而开仓成交发生在报表开始日期之前，应用无法凭空知道那笔期初仓位的真实成本。遇到这种没有开仓腿的平仓记录，系统会跳过无法复原的部分，避免制造假的开仓价。为了获得最完整的复盘结果，请尽量导入覆盖完整开仓和平仓周期的活动报表。
 
 ### 本地运行
 
@@ -101,7 +130,7 @@ CSV parsing, PnL calculation, chart rendering, and storage all happen locally in
 
 ### Recommended IBKR Report
 
-For Interactive Brokers, download the **Activity Statement** as CSV. Do not use PDF, HTML, or a cash-only transaction export.
+For Interactive Brokers, download the **Activity Statement** as CSV. Do not use PDF, HTML, Excel, or a cash-only transaction export.
 
 ![IBKR Activity Statement CSV export settings](./docs/ibkr-activity-report-download.svg)
 
@@ -120,9 +149,38 @@ When importing, choose:
 IBKR Transaction History (Report)
 ```
 
+### Standard CSV Template
+
+If you are not using IBKR, or if your broker only provides generic execution records, use the standard template:
+
+[Download the standard trade CSV template](./docs/templates/standard-trades-template.csv)
+
+Template documentation:
+
+[View template field guide](./docs/templates/README.md)
+
+The standard template must include:
+
+```csv
+Symbol,Side,Qty,Fill Price,Time,Commission,Net Amount
+```
+
+`Side` must be `Buy` or `Sell`. `Time` should preferably use `YYYY-MM-DD HH:mm:ss`.
+
 ### PnL Methodology
 
-For IBKR Activity Statement files, this project reads the `Trades` section and uses IBKR's realized PnL field for closed trades.
+For IBKR Activity Statement files, this project reads the `Trades` section, imports futures executions as raw Buy/Sell fills, and reconstructs closed trades with FIFO.
+
+Trade logs can therefore show:
+
+- Entry price
+- Exit price
+- Points
+- Entry time
+- Exit time
+- Hold time
+- Commission
+- Net PnL
 
 The trading PnL does not include:
 
@@ -133,7 +191,7 @@ The trading PnL does not include:
 - Cash reports
 - Accrued interest changes
 
-If a report starts with existing open positions, a pure FIFO reconstruction using only the report-period executions may miss the original cost basis and produce misleading results. For IBKR Activity Statements, the app therefore trusts IBKR's realized PnL. For standard execution CSV files, the app still uses FIFO matching.
+Important: if your report starts with positions that were already open before the report start date, the app cannot infer the original cost basis for those starting positions. Close-only records without an opening leg are skipped instead of inventing fake entries. For the most complete review, import a date range that covers both opening and closing executions.
 
 ### Run Locally
 

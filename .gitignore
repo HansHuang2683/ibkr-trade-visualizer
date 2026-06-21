@@ -16,5 +16,6 @@ dist-ssr
 
 # Data files containing private info
 *.csv
+!docs/templates/*.csv
 *.xls
 *.xlsx
